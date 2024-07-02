@@ -29,7 +29,7 @@ class Database extends PDO
      * @param string $password
      * @param string $dbname
      * @param string $charset
-     * @param string $dbtype
+     * @param string $dbType
      * @param string $timezone
      * @throws Exception
      */
@@ -40,11 +40,13 @@ class Database extends PDO
         string $password = 'password',
         string $dbname = 'dbname',
         string $charset = 'utf8',
-        string $dbtype = 'mysql',
+        string $dbType = 'mysql',
         string $timezone = 'Europe/Brussels'
     )
     {
-        switch (strtolower($dbtype)) {
+        define('TIGRESS_DATABASE_VERSION', '1.0.0');
+
+        switch (strtolower($dbType)) {
             case 'mysql':
                 parent::__construct("mysql:host={$host};port={$port};charset={$charset};dbname={$dbname}", $username, $password, [PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '{$timezone}'"]);
                 parent::setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -63,7 +65,7 @@ class Database extends PDO
                 parent::setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_TO_STRING);
                 break;
             default:
-                throw new Exception("$dbtype isn't implemented yet!", 404);
+                throw new Exception("$dbType isn't implemented yet!", 500);
         }
     }
 
@@ -75,6 +77,7 @@ class Database extends PDO
      * @param ...$fetch_mode_args
      * @return void
      */
+    #[\ReturnTypeWillChange]
     public function query(string $query, ?int $fetchMode = null, ...$fetch_mode_args): void
     {
         $result = parent::query($query, $fetchMode, $fetch_mode_args);
