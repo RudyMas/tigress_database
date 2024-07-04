@@ -21,6 +21,16 @@ class Database extends PDO
     private array $internalData;
 
     /**
+     * Get the version of the Database
+     *
+     * @return string
+     */
+    public static function version(): string
+    {
+        return '1.0.0';
+    }
+
+    /**
      * Database constructor.
      *
      * @param string $host
@@ -44,8 +54,6 @@ class Database extends PDO
         string $timezone = 'Europe/Brussels'
     )
     {
-        define('TIGRESS_DATABASE_VERSION', '1.0.0');
-
         switch (strtolower($dbType)) {
             case 'mysql':
                 parent::__construct("mysql:host={$host};port={$port};charset={$charset};dbname={$dbname}", $username, $password, [PDO::MYSQL_ATTR_INIT_COMMAND => "SET time_zone = '{$timezone}'"]);
