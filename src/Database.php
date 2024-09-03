@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 1.0.1
+ * @version 1.0.2
  * @package Tigress
  */
 class Database extends PDO
@@ -26,7 +26,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '1.0.1';
+        return '1.0.2';
     }
 
     /**
@@ -198,5 +198,36 @@ class Database extends PDO
     public function cleanSQL(string $string = null): string
     {
         return ($string === null) ? parent::quote(null) : parent::quote($string);
+    }
+
+    /**
+     * Run a query with key bindings
+     *
+     * @param string $sql
+     * @param array $keyBindings
+     * @return void
+     */
+    public function runQuery(string $sql, array $keyBindings = []): void
+    {
+        $stmt = $this->prepare($sql);
+        foreach ($keyBindings as $key => $value) {
+            $stmt->bindParam($key, $value, $this->getDataType($value));
+        }
+        $stmt->execute();
+        $this->internalData = $stmt->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    /**
+     * Get the data type of the value
+     *
+     * @param mixed $value
+     * @return int
+     */
+    private function getDataType(mixed $value): int
+    {
+        if (is_int($value)) return PDO::PARAM_INT;
+        if (is_bool($value)) return PDO::PARAM_BOOL;
+        if (is_null($value)) return PDO::PARAM_NULL;
+        return PDO::PARAM_STR;
     }
 }
