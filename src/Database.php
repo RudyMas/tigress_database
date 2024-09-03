@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 1.0.2
+ * @version 1.0.3
  * @package Tigress
  */
 class Database extends PDO
@@ -26,7 +26,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '1.0.2';
+        return '1.0.3';
     }
 
     /**
@@ -205,16 +205,17 @@ class Database extends PDO
      *
      * @param string $sql
      * @param array $keyBindings
-     * @return void
+     * @return bool
      */
-    public function runQuery(string $sql, array $keyBindings = []): void
+    public function runQuery(string $sql, array $keyBindings = []): bool
     {
         $stmt = $this->prepare($sql);
         foreach ($keyBindings as $key => $value) {
             $stmt->bindParam($key, $value, $this->getDataType($value));
         }
-        $stmt->execute();
+        $result = $stmt->execute();
         $this->internalData = $stmt->fetchAll(PDO::FETCH_OBJ);
+        return $result;
     }
 
     /**
