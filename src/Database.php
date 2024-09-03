@@ -11,13 +11,12 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 1.0.0
+ * @version 1.0.1
  * @package Tigress
  */
 class Database extends PDO
 {
     public int $rows;
-    public array $data;
     private array $internalData;
 
     /**
@@ -27,7 +26,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '1.0.0';
+        return '1.0.1';
     }
 
     /**
@@ -96,38 +95,37 @@ class Database extends PDO
     /**
      * Copy the internal data to the data property
      *
-     * @return void
+     * @return array
      */
-    public function fetchAll(): void
+    public function fetchAll(): array
     {
-        $this->data = $this->internalData;
+        return $this->internalData;
     }
 
     /**
      * Fetch a row from the internal data
      *
      * @param int $row
-     * @return void
+     * @return object
      */
-    public function fetch(int $row): void
+    public function fetch(int $row): object
     {
-        $this->data = $this->internalData[$row];
+        return $this->internalData[$row];
     }
 
     /**
      * Get a single row by query
      *
      * @param string $query
-     * @return bool
+     * @return object|false
      */
-    public function queryRow(string $query): bool
+    public function queryRow(string $query): object|false
     {
         $this->query($query);
         if ($this->rows === 0) {
             return false;
         }
-        $this->fetch(0);
-        return true;
+        return $this->fetch(0);
     }
 
     /**
@@ -140,8 +138,11 @@ class Database extends PDO
     public function queryItem(string $query, string $field): mixed
     {
         $this->query($query);
-        $this->fetch(0);
-        return $this->data->$field;
+        if ($this->rows === 0) {
+            return false;
+        }
+        $data = $this->fetch(0);
+        return $data->$field;
     }
 
     /**
