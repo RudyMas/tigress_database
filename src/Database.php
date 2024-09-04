@@ -11,12 +11,24 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 1.0.3
+ * @version 1.1.0
  * @package Tigress
  */
 class Database extends PDO
 {
-    public int $rows;
+    /**
+     * @var int
+     */
+    private int $rows;
+
+    /**
+     * @var int
+     */
+    private int $iterator = 0;
+
+    /**
+     * @var array
+     */
     private array $internalData;
 
     /**
@@ -26,7 +38,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '1.0.3';
+        return '1.1.0';
     }
 
     /**
@@ -82,35 +94,20 @@ class Database extends PDO
      * @param string $query
      * @param int|null $fetchMode
      * @param ...$fetch_mode_args
-     * @return void
+     * @return bool
      */
-    #[\ReturnTypeWillChange]
-    public function query(string $query, ?int $fetchMode = null, ...$fetch_mode_args): void
+    public function query(string $query, ?int $fetchMode = null, ...$fetch_mode_args): bool
     {
         $result = parent::query($query, $fetchMode, $fetch_mode_args);
+        if ($result === false) {
+            $this->internalData = [];
+            $this->rows = 0;
+            return false;
+        }
         $this->internalData = $result->fetchAll(PDO::FETCH_OBJ);
         $this->rows = count($this->internalData);
-    }
-
-    /**
-     * Copy the internal data to the data property
-     *
-     * @return array
-     */
-    public function fetchAll(): array
-    {
-        return $this->internalData;
-    }
-
-    /**
-     * Fetch a row from the internal data
-     *
-     * @param int $row
-     * @return object
-     */
-    public function fetch(int $row): object
-    {
-        return $this->internalData[$row];
+        $this->iterator = 0;
+        return true;
     }
 
     /**
@@ -119,7 +116,7 @@ class Database extends PDO
      * @param string $query
      * @return object|false
      */
-    public function queryRow(string $query): object|false
+    public function fetchRowByQuery(string $query): object|false
     {
         $this->query($query);
         if ($this->rows === 0) {
@@ -135,7 +132,7 @@ class Database extends PDO
      * @param string $field
      * @return mixed
      */
-    public function queryItem(string $query, string $field): mixed
+    public function fetchItemByQuery(string $query, string $field): mixed
     {
         $this->query($query);
         if ($this->rows === 0) {
@@ -143,17 +140,6 @@ class Database extends PDO
         }
         $data = $this->fetch(0);
         return $data->$field;
-    }
-
-    /**
-     * Execute a query
-     *
-     * @param string $query
-     * @return void
-     */
-    public function execQuery(string $query): void
-    {
-        $this->rows = parent::exec($query);
     }
 
     /**
@@ -190,6 +176,121 @@ class Database extends PDO
     }
 
     /**
+     * Fetch a row from the internal data
+     *
+     * @param int $row
+     * @return object
+     */
+    public function fetch(int $row): object
+    {
+        return $this->internalData[$row];
+    }
+
+    /**
+     * Copy the internal data to the data property
+     *
+     * @return array
+     */
+    public function fetchAll(): array
+    {
+        return $this->internalData;
+    }
+
+    /**
+     * Fetch the current row
+     *
+     * @return object
+     */
+    public function fetchCurrent(): object
+    {
+        return $this->internalData[$this->iterator];
+    }
+
+    /**
+     * Fetch the next row
+     *
+     * @return object
+     */
+    public function fetchNext(): object
+    {
+        $this->iterator++;
+        if ($this->iterator >= $this->rows) {
+            $this->iterator = $this->rows - 1;
+        }
+        return $this->internalData[$this->iterator];
+    }
+
+    /**
+     * Fetch the previous row
+     *
+     * @return object
+     */
+    public function fetchPrevious(): object
+    {
+        $this->iterator--;
+        if ($this->iterator < 0) {
+            $this->iterator = 0;
+        }
+        return $this->internalData[$this->iterator];
+    }
+
+    /**
+     * Run a select query with key bindings
+     *
+     * @param string $sql
+     * @param array $keyBindings
+     * @return bool
+     */
+    public function selectQuery(string $sql, array $keyBindings = []): bool
+    {
+        $stmt = $this->prepare($sql);
+        foreach ($keyBindings as $key => $value) {
+            $stmt->bindParam($key, $value, $this->getDataType($value));
+        }
+        $result = $stmt->execute();
+        $this->internalData = $stmt->fetchAll(PDO::FETCH_OBJ);
+        $this->rows = count($this->internalData);
+        $this->iterator = 0;
+        return $result;
+    }
+
+    /**
+     * Run a insert query with key bindings
+     *
+     * @param string $sql
+     * @param array $keyBindings
+     * @return bool
+     */
+    public function insertQuery(string $sql, array $keyBindings = []): bool
+    {
+        return $this->runQuery($sql, $keyBindings);
+    }
+
+    /**
+     * Run a update query with key bindings
+     *
+     * @param string $sql
+     * @param array $keyBindings
+     * @return bool
+     */
+    public function updateQuery(string $sql, array $keyBindings = []): bool
+    {
+        return $this->runQuery($sql, $keyBindings);
+    }
+
+    /**
+     * Run a delete query with key bindings
+     *
+     * @param string $sql
+     * @param array $keyBindings
+     * @return bool
+     */
+    public function deleteQuery(string $sql, array $keyBindings = []): bool
+    {
+        return $this->runQuery($sql, $keyBindings);
+    }
+
+    /**
      * Quote a string
      *
      * @param string|null $string
@@ -201,21 +302,40 @@ class Database extends PDO
     }
 
     /**
+     * Get the number of rows
+     *
+     * @return int
+     */
+    public function getRows(): int
+    {
+        return $this->rows;
+    }
+
+    /**
+     * Execute a query
+     *
+     * @param string $query
+     * @return void
+     */
+    private function execQuery(string $query): void
+    {
+        $this->rows = parent::exec($query);
+    }
+
+    /**
      * Run a query with key bindings
      *
      * @param string $sql
      * @param array $keyBindings
      * @return bool
      */
-    public function runQuery(string $sql, array $keyBindings = []): bool
+    private function runQuery(string $sql, array $keyBindings = []): bool
     {
         $stmt = $this->prepare($sql);
         foreach ($keyBindings as $key => $value) {
             $stmt->bindParam($key, $value, $this->getDataType($value));
         }
-        $result = $stmt->execute();
-        $this->internalData = $stmt->fetchAll(PDO::FETCH_OBJ);
-        return $result;
+        return $stmt->execute();
     }
 
     /**
