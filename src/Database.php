@@ -96,6 +96,7 @@ class Database extends PDO
      * @param ...$fetch_mode_args
      * @return bool
      */
+    #[\ReturnTypeWillChange]
     public function query(string $query, ?int $fetchMode = null, ...$fetch_mode_args): bool
     {
         $result = parent::query($query, $fetchMode, $fetch_mode_args);
