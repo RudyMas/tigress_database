@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 1.1.0
+ * @version 1.1.1
  * @package Tigress
  */
 class Database extends PDO
@@ -246,7 +246,7 @@ class Database extends PDO
     {
         $stmt = $this->prepare($sql);
         foreach ($keyBindings as $key => $value) {
-            $stmt->bindParam($key, $value, $this->getDataType($value));
+            $stmt->bindValue($key, $value, $this->getDataType($value));
         }
         $result = $stmt->execute();
         $this->internalData = $stmt->fetchAll(PDO::FETCH_OBJ);
@@ -334,7 +334,7 @@ class Database extends PDO
     {
         $stmt = $this->prepare($sql);
         foreach ($keyBindings as $key => $value) {
-            $stmt->bindParam($key, $value, $this->getDataType($value));
+            $stmt->bindValue($key, $value, $this->getDataType($value));
         }
         return $stmt->execute();
     }
