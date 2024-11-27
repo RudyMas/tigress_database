@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 2024.11.27.0
+ * @version 2024.11.27.1
  * @package Tigress
  */
 class Database extends PDO
@@ -19,7 +19,11 @@ class Database extends PDO
     /**
      * @var int
      */
-    private int $rows;
+    private int $rows {
+        get {
+            return $this->rows;
+        }
+    }
 
     /**
      * @var int
@@ -38,7 +42,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '2024.11.27.0';
+        return '2024.11.27.1';
     }
 
     /**
@@ -300,16 +304,6 @@ class Database extends PDO
     public function cleanSQL(?string $string = null): string
     {
         return ($string === null) ? parent::quote(null) : parent::quote($string);
-    }
-
-    /**
-     * Get the number of rows
-     *
-     * @return int
-     */
-    public function getRows(): int
-    {
-        return $this->rows;
     }
 
     /**
