@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 2024.11.27.1
+ * @version 2024.11.28.0
  * @package Tigress
  */
 class Database extends PDO
@@ -19,12 +19,7 @@ class Database extends PDO
     /**
      * @var int
      */
-    private int $rows {
-        get {
-            return $this->rows;
-        }
-    }
-
+    private int $rows;
     /**
      * @var int
      */
@@ -42,7 +37,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '2024.11.27.1';
+        return '2024.11.28';
     }
 
     /**
@@ -345,5 +340,10 @@ class Database extends PDO
         if (is_bool($value)) return PDO::PARAM_BOOL;
         if (is_null($value)) return PDO::PARAM_NULL;
         return PDO::PARAM_STR;
+    }
+
+    public function getRows(): int
+    {
+        return $this->rows;
     }
 }
