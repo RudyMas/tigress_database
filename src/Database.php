@@ -11,7 +11,7 @@ use PDO;
  * @author Rudy Mas <rudy.mas@rudymas.be>
  * @copyright 2024, rudymas.be. (http://www.rudymas.be/)
  * @license https://opensource.org/licenses/GPL-3.0 GNU General Public License, version 3 (GPL-3.0)
- * @version 2024.11.28.0
+ * @version 2025.01.23.0
  * @package Tigress
  */
 class Database extends PDO
@@ -37,7 +37,7 @@ class Database extends PDO
      */
     public static function version(): string
     {
-        return '2024.11.28';
+        return '2025.01.23';
     }
 
     /**
@@ -299,6 +299,62 @@ class Database extends PDO
     public function cleanSQL(?string $string = null): string
     {
         return ($string === null) ? parent::quote(null) : parent::quote($string);
+    }
+
+    /**
+     * Backup the database
+     *
+     * @param string $dbHost
+     * @param string $dbUsername
+     * @param string $dbPassword
+     * @param string $dbName
+     * @param string $filename
+     * @return void
+     * @throws Exception
+     */
+    public function backupDatabase(
+        string $dbHost,
+        string $dbUsername,
+        string $dbPassword,
+        string $dbName,
+        string $filename
+    ): void
+    {
+        $output = [];
+        $return = null;
+        exec("mysqldump --user={$dbUsername} --password={$dbPassword} --host={$dbHost} {$dbName} > {$filename}", $output, $return);
+
+        if ($return !== 0) {
+            throw new Exception('Backup failed!', 500);
+        }
+    }
+
+    /**
+     * Restore the database
+     *
+     * @param string $dbHost
+     * @param string $dbUsername
+     * @param string $dbPassword
+     * @param string $dbName
+     * @param string $filename
+     * @return void
+     * @throws Exception
+     */
+    public function restoreDatabase(
+        string $dbHost,
+        string $dbUsername,
+        string $dbPassword,
+        string $dbName,
+        string $filename
+    ): void
+    {
+        $output = [];
+        $return = null;
+        exec("mysql --user={$dbUsername} --password={$dbPassword} --host={$dbHost} {$dbName} < {$filename}", $output, $return);
+
+        if ($return !== 0) {
+            throw new Exception('Restore failed!', 500);
+        }
     }
 
     /**
