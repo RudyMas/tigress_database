@@ -4,6 +4,7 @@ namespace Tigress;
 
 use Exception;
 use PDO;
+use PDOException;
 
 /**
  * Class Database (PHP version 8.4)
@@ -354,6 +355,37 @@ class Database extends PDO
 
         if ($return !== 0) {
             throw new Exception('Restore failed!', 500);
+        }
+    }
+
+    /**
+     * Check if a table exists
+     *
+     * @param string $table
+     * @return bool
+     */
+    public function tableExists(string $table): bool
+    {
+        $sql = "SHOW TABLES LIKE :table";
+        $stmt = $this->prepare($sql);
+        $stmt->bindValue(':table', $table);
+        $stmt->execute();
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Create a table
+     *
+     * @param string $query
+     * @return bool
+     */
+    public function createTable(string $query): bool
+    {
+        try {
+            $this->execQuery($query);
+            return true;
+        } catch (PDOException $e) {
+            throw new PDOException($e);
         }
     }
 
